@@ -1,7 +1,7 @@
-webpack
-webpack-cli
-webpack-dev-server 
-
+webpack  
+webpack-cli  
+webpack-dev-server  
+  
 babel-core                              ES6转译ES5
 babel-loader 
 babel-preset-env 
