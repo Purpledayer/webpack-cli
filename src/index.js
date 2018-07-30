@@ -1,10 +1,24 @@
-// index.js
-let a = 'hello world';
-document.body.innerHTML = a;
-console.log('这是webpack打包的入口文件');
- 
-// 还需要在主要的js文件里写入下面这段代码
+import React from 'react'
+import { render } from 'react-dom'
+import { HashRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import Routers from './routers'
+import store from './store'
+
+class App extends React.Component {
+    render() {
+        return (
+            <Provider store={store}>
+                <HashRouter>
+                    <Routers />
+                </HashRouter>
+            </Provider>
+        )
+    }
+}
+
+render(<App/>, document.getElementById('root'))
+
 if (module.hot) {
-    // 实现热更新
-    module.hot.accept();
+    module.hot.accept()
 }

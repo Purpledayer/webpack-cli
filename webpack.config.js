@@ -1,101 +1,180 @@
-const webpack = require('webpack');
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');                                // 拆分css样式的插件
-// mini-css-extract-plugin webpack4 新插件 代替 extract-text-webpack-plugin
-// const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-module.exports = {
-    entry: './src/index.js',                                                                            // 入口文件
-    output: {                                                                                           // 出口文件
-        filename: 'bundle.[hash:4].js',                                                                 // 打包后的文件名称
-        path: path.resolve('dist')                                                                      // 打包后的目录，必须是绝对路径
-    },             
-    resolve: {                                                                                          //省略后缀名写法
-        extensions: ['.jsx','.js', '.json','.less'],
-        alias: {
-            src: './src'
-        }
+const webpack = require('webpack')
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const project = require('./project.config.js')
+
+const envDevelopment = project.env === 'development'
+const envProduction = project.env === 'production'
+const devtool = project.sourceMap ? 'inline-source-map' : false
+
+const SRC_DIR = path.join(project.basePath, project.srcDir)
+
+const config = {
+    entry: {
+        main: [SRC_DIR]
     },
-    module: {                                                                                           // 处理对应模块
+    output: {
+        path      : path.resolve(project.basePath, project.outDir),
+        filename  : envDevelopment ? 'js/[name].js' : "js/[name].[chunkhash:5].js",
+        publicPath: project.publicPath
+    },
+    mode    : project.env,
+    devtool : devtool,
+    resolve : {
+        modules: [
+            project.srcDir,
+            'node_modules',
+        ],
+        alias: {
+            '@': SRC_DIR
+        },
+        extensions: ['*', '.js', '.jsx', '.json', '.less', '.css']
+    },
+    module : {
         rules: [
             {
-                test: /\.css|.less$/,                                                                   // 解析css
-                use: ExtractTextWebpackPlugin.extract({
-                    use: 'css-loader'                                                                   // 将css用link的方式引入就不再需要style-loader了
-                }),
-            },
-            {
-                test: /\.(jpe?g|png|gif)$/,
-                use: [
-                    {
-                        loader: 'url-loader',
-                        options: {
-                            limit: 8192,                                                                // 小于8k的图片自动转成base64格式，并且不会存在实体图片
-                            outputPath: 'images/'                                                       // 图片打包后存放的目录
-                        }
-                    }
-                ]
-            },
-            {                                                                                           // 引用字体和文件
-                test: /\.(eot|ttf|woff|svg)$/,
-                use: 'file-loader'
-            },
-            {                                       /**疑问与上面的css怎么设置 */
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader', 'postcss-loader']
-            },
-            {
-                test:/\.js$/,
-                use: 'babel-loader',
-                include: /src/,                                                                         // 只转化src目录下的js
-                exclude: /node_modules/                                                                 // 排除掉node_modules，优化打包速度
-            }
-            // mini-css-extract-plugin webpack4 新插件 代替 extract-text-webpack-plugin
-            // {
-            //     test: /\.css$/,
-            //     use: [MiniCssExtractPlugin.loader, 'css-loader']
-            // }
-        ]
-    },     
-                                                    
-    optimization: {                                                                                     // 提取公共代码
-        splitChunks: {
-            cacheGroups: {
-                vendor: {                                                                               // 抽离第三方插件
-                    test: /node_modules/,                                                               // 指定是node_modules下的第三方包
-                    chunks: 'initial',
-                    name: 'vendor',                                                                     // 打包后的文件名，任意命名   
-                                                                                                        // 设置优先级，防止和自定义的公共代码提取时被覆盖，不进行打包
-                    priority: 10   
+                test: /(\.jsx|\.js)$/,
+                use : {
+                    loader: 'babel-loader?cacheDirectory'
                 },
-                utils: {                                                                                // 抽离自己写的公共代码，utils这个名字可以随意起
-                    chunks: 'initial',
-                    name: 'utils',                                                                      // 任意命名
-                    minSize: 0                                                                          // 只要超出0字节就生成一个新包
+                include: SRC_DIR,
+                exclude: /node_modules/
+            },
+            {
+                test    : /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+                loader  : 'url-loader',
+                options : {
+                    limit     : 10000,
+                    outputPath: "images"
+                }
+            }
+        ]
+    },
+    optimization: {
+        sideEffects: false,
+        splitChunks: {
+            chunks     :'all',
+            minSize    : 30000,
+            minChunks  : 1,
+            cacheGroups: {
+                common: {
+                    name    : 'common',
+                    test    : /node_modules/,
+                    chunks  : 'initial',
+                    priority: -10,
+                    enforce : true
+                },
+                styles: {
+                    name   : 'styles',
+                    test   : /(\.less|\.css)$/,
+                    chunks : 'all',
+                    enforce: true,
                 }
             }
         }
-    },                                
-    plugins: [                                                                                          // 对应的插件
-        new HtmlWebpackPlugin({                                                                         // 通过new一下这个类来使用插件
-            template: './src/index.html',                                                               // 用哪个html作为模板
-            hash: true,                                                                                 // 会在打包好的bundle.js后面加上hash串
+    },
+    performance: {
+        hints: false
+    },
+    plugins: [
+        new webpack.DllReferencePlugin({
+            context : project.basePath,
+            manifest: path.resolve(project.basePath, 'dll', 'manifest.json')
         }),
-        new ExtractTextWebpackPlugin('css/style.css'),                                                  // 拆分后会把css文件放到dist目录下的css/style.css
-        // mini-css-extract-plugin webpack4 新插件 代替 extract-text-webpack-plugin
-        // new MiniCssExtractPlugin({
-        //     filename: 'css/a.css'                                                                    // 指定打包后的css
-        // })
-        new CleanWebpackPlugin('dist'),                                                                 // 打包前先清空
-        new webpack.HotModuleReplacementPlugin()                                                        // 热更新，热更新不是刷新
-    ],            
-    devServer: {                                                                                        // 开发服务器配置
-        contentBase: './dist',
-        host: 'localhost',                                                                              // 默认是localhost
-        port: 3000,                                                                                     // 端口
-        open: true,                                                                                     // 自动打开浏览器
-        hot: true                                                                                       // 开启热更新
-    },                                                                                      
-    mode: 'development'                                                                                 // 模式配置
+        new HtmlWebpackPlugin({
+            template : 'index.html',
+            inject   : true,
+            favicon  : path.resolve('favicon.ico'),
+            minify   : {
+                collapseWhitespace: true,
+            }
+        }),
+    ]
 }
+
+const fontLoader = [['woff', 'application/font-woff'], ['woff2', 'application/font-woff2'], ['otf', 'font/opentype'], ['ttf', 'application/octet-stream'], ['eot', 'application/vnd.ms-fontobject'], ['svg', 'image/svg+xml']]
+fontLoader.forEach((font) => {
+    let extension = font[0]
+    let mimetype = font[1]
+    config.module.rules.push({
+        test    : new RegExp(`\\.${extension}$`),
+        loader  : 'url-loader',
+        options : {
+            name  : 'fonts/[name].[ext]',
+            limit : 10000,
+            mimetype,
+        },
+    })
+})
+
+if (envDevelopment) {
+    config.module.rules.push({
+        test: /(\.less|\.css)$/,
+        use: [{
+            loader : "style-loader"
+        }, {
+            loader : "css-loader"
+        }, {
+            loader : "less-loader",
+            options: {
+                javascriptEnabled: true
+            }
+        }]
+    })
+    config.entry.main.push(
+        'webpack-hot-middleware/client?path=./__webpack_hmr'
+    )
+    config.plugins.push(
+        new webpack.NoEmitOnErrorsPlugin(),
+        new webpack.HotModuleReplacementPlugin()
+    )
+}
+
+if (envProduction) {
+    config.module.rules.push({
+        test: /(\.less|\.css)$/,
+        use :[
+            MiniCssExtractPlugin.loader,
+            {
+                loader : 'css-loader',
+                options: {
+                    importLoaders  : 1,
+                    minimize: {
+                        autoprefixer: {
+                            add     : true,
+                            remove  : true,
+                            browsers: ['last 2 versions'],
+                        },
+                        discardComments : {
+                            removeAll : true,
+                        },
+                        discardUnused: false,
+                        mergeIdents  : false,
+                        reduceIdents : false,
+                        safe         : true
+                    }
+                }
+            },
+            {
+                loader: 'less-loader',
+                options: {
+                    javascriptEnabled: true
+                }
+            }
+        ]
+    })
+    config.plugins.push(
+        new MiniCssExtractPlugin({
+            filename     : "css/main.[chunkhash:5].css",
+            chunkFilename: 'css/main.[contenthash:5].css'
+        }),
+        new CopyWebpackPlugin([{
+            from : path.join(project.basePath,'dll'),
+            to   : path.join(project.basePath,'dist','dll')
+        }])
+    )
+}
+
+module.exports = config

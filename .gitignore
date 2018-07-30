@@ -1,4 +1,8 @@
+.DS_STORE
+*.log
 node_modules
-Description.md
-app/style/base.css
-app/style/theme.css
+dist
+coverage
+.idea/
+.yarn-cache
+dll
