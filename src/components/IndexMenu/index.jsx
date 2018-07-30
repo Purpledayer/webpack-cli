@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom'
 import { Menu } from 'antd'
 const SubMenu = Menu.SubMenu
 import './index.less'
-import menuConfig from '@/config/menu'
+import menuConfig from '@/config/indexconfig/menu'
 
 @withRouter
 export default class SideMenu extends Component {

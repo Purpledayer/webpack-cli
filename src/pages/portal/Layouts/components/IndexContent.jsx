@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Route, withRouter } from 'react-router-dom'
 import Loading from '@/components/Loading';
-import routes from '@/config/routes';
+import routes from '@/config/indexconfig/routes';
 import { Layout } from 'antd';
 const { Content } = Layout;
 export default class IndexContent extends Component {
