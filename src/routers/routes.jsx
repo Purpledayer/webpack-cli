@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
 import { Route, Switch, withRouter } from 'react-router-dom'
-import Layouts from './Layouts'
-import Login from './Login'
+import Layouts from '../pages/Layouts'
+import Login from '../pages/Login'
 import Cookies from 'js-cookie'
 
 @withRouter
-class Routers extends Component {
+export default class Routers extends Component {
     constructor(props) {
         super(props)
         this.pathname = this.props.location.pathname
@@ -45,4 +45,4 @@ class Routers extends Component {
     }
 }
 
-export default Routers
+
