@@ -13,7 +13,7 @@ import * as ROOT_action from '@/store/ROOT/action'
     state => ({ ...state.ROOT }),
     dispatch => bindActionCreators({ ...ROOT_action }, dispatch)
 )
-class Right extends Component {
+export default class Top extends Component {
     componentWillMount(){
         let { ROOT_userInfo, ROOT_ChangeUser } = this.props
         if (ROOT_userInfo.name == '') {
@@ -26,7 +26,8 @@ class Right extends Component {
     render() {
         const { name } = this.props.ROOT_userInfo
         return (
-            <div className='right'>
+            <div className='top'>
+                <div className="logo" />
                 <div className='header clear clearFix'>
                     <div className='user'>
                         <span className='font icon-touxiang'></span>
@@ -35,16 +36,8 @@ class Right extends Component {
                         </Tooltip>
                     </div>
                 </div>
-                <div className='routeWrap'>
-                    <Loading>
-                        {routes.map((item,i)=>
-                            <Route key={i} path={item.path} component={item.component} exact/>
-                        )}
-                    </Loading>
-                </div>
             </div>
         )
     }
 }
 
-export default Right

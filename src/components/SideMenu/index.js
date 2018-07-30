@@ -29,7 +29,7 @@ class SideMenu extends Component {
     render() {
         return (
             <div className='SideMenu_wrap'>
-                <Menu mode="inline" theme="dark" onSelect={this.onSelect} selectedKeys={this.state.keys}>
+                <Menu  mode="horizontal" onSelect={this.onSelect} selectedKeys={this.state.keys}>
                     {menuConfig.map((item,i)=>
                         item.list && item.list.length > 0 ?
                             <SubMenu key={item.key} title={<span><span className={'font icon-' +item.icon}></span><span>{item.title}</span></span>}>
